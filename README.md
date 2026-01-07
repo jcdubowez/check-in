@@ -15,7 +15,11 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ALfhir4s5XdHNa0y_xGADx
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Crea un archivo `.env.local` con las siguientes variables:
+   ```
+   GEMINI_API_KEY=tu_clave_de_gemini
+   VITE_GOOGLE_SCRIPT_URL=url_de_tu_google_apps_script
+   ```
 3. Run the app:
    `npm run dev`
 
@@ -81,9 +85,52 @@ Si la aplicación no se ve en GitHub Pages:
    - Intenta hacer un hard refresh (Ctrl+Shift+R o Cmd+Shift+R)
    - O espera unos minutos y vuelve a intentar
 
+## Integración con Google Sheets
+
+Las respuestas del check-in se guardan automáticamente en Google Sheets.
+
+### Configuración de Google Sheets
+
+1. **Abre tu Google Sheet:**
+   - Ve a: https://docs.google.com/spreadsheets/d/1Kxu7-T_ArqZ5dqV3Xw8D8Bo4tZsmTtBZggDWey-hUsA/edit
+
+2. **Crea el Google Apps Script:**
+   - En tu Google Sheet, ve a **Extensiones** → **Apps Script**
+   - Copia el contenido del archivo `google-apps-script.js` de este repositorio
+   - Pega el código en el editor de Apps Script
+   - Guarda el proyecto (Ctrl+S o Cmd+S)
+
+3. **Despliega el script:**
+   - Haz clic en **Desplegar** → **Nueva implementación**
+   - Selecciona tipo **Aplicación web**
+   - Configura:
+     - **Ejecutar como:** Yo (tu cuenta)
+     - **Quién tiene acceso:** Cualquiera
+   - Haz clic en **Desplegar**
+   - **Copia la URL de la aplicación web** (algo como: `https://script.google.com/macros/s/...`)
+
+4. **Configura la URL en GitHub:**
+   - Ve a Settings → Secrets and variables → Actions
+   - Crea un nuevo secreto llamado `VITE_GOOGLE_SCRIPT_URL`
+   - Pega la URL de tu Google Apps Script
+   - También agrega esta variable en tu `.env.local` para desarrollo local
+
+### Estructura de datos en Google Sheets
+
+Los datos se guardan con las siguientes columnas:
+- Email
+- Completitud (%)
+- Bugs
+- Satisfacción
+- Comentarios
+- Timestamp
+- Month ID
+- Month Name
+
 ### Notas
 
 - El workflow detecta automáticamente el nombre de tu repositorio y configura el base path correctamente
 - Si tu repositorio se llama `[usuario].github.io`, la aplicación se desplegará en la raíz
-- Asegúrate de que el secreto `GEMINI_API_KEY` esté configurado correctamente para que la aplicación funcione
+- Asegúrate de que los secretos `GEMINI_API_KEY` y `VITE_GOOGLE_SCRIPT_URL` estén configurados correctamente
 - El archivo `404.html` se crea automáticamente para que las rutas de React funcionen correctamente en GitHub Pages
+- Los datos también se guardan en localStorage como respaldo

@@ -38,6 +38,7 @@ jobs:
           GITHUB_ACTIONS: true
           GITHUB_REPOSITORY: ${{ github.repository }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          VITE_GOOGLE_SCRIPT_URL: ${{ secrets.VITE_GOOGLE_SCRIPT_URL }}
 
       - name: Debug - Show base path and HTML
         run: |

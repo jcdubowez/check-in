@@ -3,6 +3,7 @@ import { MonthlyReview, SatisfactionLevel } from './types';
 import { SATISFACTION_EMOJIS } from './constants';
 import { Tooltip } from './components/Tooltip';
 import { getDeveloperInsight } from './services/geminiService';
+import { saveToGoogleSheets } from './services/googleSheetsService';
 
 const App: React.FC = () => {
   const [userEmail, setUserEmail] = useState<string | null>(localStorage.getItem('devpulse_email'));
@@ -61,6 +62,18 @@ const App: React.FC = () => {
     const updatedReviews = [...allReviews, newReview];
     setAllReviews(updatedReviews);
     localStorage.setItem('devpulse_reviews', JSON.stringify(updatedReviews));
+
+    // Guardar en Google Sheets
+    await saveToGoogleSheets({
+      email: userEmail,
+      completion: completion,
+      bugs: bugs,
+      satisfaction: satisfaction,
+      comments: comments.trim() || undefined,
+      timestamp: newReview.timestamp,
+      monthId: currentMonthId,
+      monthName: currentMonthName,
+    });
 
     const feedback = await getDeveloperInsight(completion, bugs, satisfaction, comments);
     setInsight(feedback);
