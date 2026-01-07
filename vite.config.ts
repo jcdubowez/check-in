@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => {
       if (!repoName.endsWith('.github.io')) {
         base = `/${repoName}/`;
       }
+    } else if (process.env.VITE_BASE_PATH) {
+      // Permitir override manual para testing local
+      base = process.env.VITE_BASE_PATH;
     }
     return {
       base,

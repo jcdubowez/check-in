@@ -43,8 +43,47 @@ Este proyecto está configurado para desplegarse automáticamente en GitHub Page
 Una vez desplegado, tu aplicación estará disponible en:
 - `https://[tu-usuario].github.io/[nombre-del-repositorio]/`
 
+### Probar localmente con el base path de GitHub Pages
+
+Para probar cómo se verá la aplicación en GitHub Pages localmente:
+
+```bash
+npm run preview:gh-pages
+```
+
+Esto construirá la aplicación con el base path `/check-in/` y la servirá localmente para que puedas verificar que todo funciona correctamente.
+
+### Solución de problemas
+
+Si la aplicación no se ve en GitHub Pages:
+
+1. **Verifica que GitHub Pages esté habilitado:**
+   - Ve a Settings → Pages
+   - Asegúrate de que "Source" esté configurado como "GitHub Actions"
+
+2. **Verifica el workflow:**
+   - Ve a la pestaña "Actions" en tu repositorio
+   - Revisa que el último workflow se haya completado exitosamente
+   - Si hay errores, revisa los logs del workflow
+
+3. **Verifica el secreto GEMINI_API_KEY:**
+   - Ve a Settings → Secrets and variables → Actions
+   - Asegúrate de que `GEMINI_API_KEY` esté configurado
+   - Si falta, la aplicación puede no funcionar correctamente
+
+4. **Verifica la consola del navegador:**
+   - Abre las herramientas de desarrollador (F12)
+   - Revisa la pestaña "Console" para ver errores de JavaScript
+   - Revisa la pestaña "Network" para ver si hay recursos que no se cargan (404)
+
+5. **Limpia la caché:**
+   - A veces GitHub Pages puede servir una versión en caché
+   - Intenta hacer un hard refresh (Ctrl+Shift+R o Cmd+Shift+R)
+   - O espera unos minutos y vuelve a intentar
+
 ### Notas
 
 - El workflow detecta automáticamente el nombre de tu repositorio y configura el base path correctamente
 - Si tu repositorio se llama `[usuario].github.io`, la aplicación se desplegará en la raíz
 - Asegúrate de que el secreto `GEMINI_API_KEY` esté configurado correctamente para que la aplicación funcione
+- El archivo `404.html` se crea automáticamente para que las rutas de React funcionen correctamente en GitHub Pages
