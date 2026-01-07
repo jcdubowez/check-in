@@ -34,8 +34,8 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.VITE_GOOGLE_SCRIPT_URL': JSON.stringify(env.VITE_GOOGLE_SCRIPT_URL)
       },
+      envPrefix: 'VITE_', // Vite automáticamente expone variables con prefijo VITE_ a import.meta.env
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
