@@ -4,8 +4,18 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    // Para GitHub Pages: usar el nombre del repositorio como base path
+    // Si GITHUB_REPOSITORY está definido, extraer el nombre del repo
+    let base = '/';
+    if (process.env.GITHUB_ACTIONS && process.env.GITHUB_REPOSITORY) {
+      const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
+      // Solo agregar base path si no es un repositorio de usuario (usuario.github.io)
+      if (!repoName.endsWith('.github.io')) {
+        base = `/${repoName}/`;
+      }
+    }
     return {
-      base: process.env.GITHUB_ACTIONS ? '/check-in-main/' : '/',
+      base,
       server: {
         port: 3000,
         host: '0.0.0.0',
