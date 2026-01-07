@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { MonthlyReview, SatisfactionLevel } from './types';
 import { SATISFACTION_EMOJIS } from './constants';
 import { Tooltip } from './components/Tooltip';
-import { AdminDashboard } from './components/AdminDashboard';
 import { getDeveloperInsight } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -15,7 +14,6 @@ const App: React.FC = () => {
   const [comments, setComments] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [insight, setInsight] = useState<string | null>(null);
-  const [showAdmin, setShowAdmin] = useState(false);
   const [allReviews, setAllReviews] = useState<MonthlyReview[]>([]);
   const [alreadyDoneThisMonth, setAlreadyDoneThisMonth] = useState(false);
 
@@ -86,7 +84,7 @@ const App: React.FC = () => {
           <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <i className="fa-solid fa-rocket text-3xl text-indigo-600"></i>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Bienvenido a Check-in</h1>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Bienvenido a Sooft Check-in</h1>
           <p className="text-slate-500 mb-8 text-sm">Ingresa tu email corporativo para comenzar tu revisión.</p>
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -122,10 +120,6 @@ const App: React.FC = () => {
             Cerrar sesión ({userEmail})
           </button>
         </div>
-        <button onClick={() => setShowAdmin(true)} className="mt-8 text-slate-300 hover:text-indigo-400 text-xs transition-colors flex items-center gap-1 mx-auto">
-          <i className="fa-solid fa-lock"></i> Panel Administrador
-        </button>
-        {showAdmin && <AdminDashboard reviews={allReviews} onClose={() => setShowAdmin(false)} />}
       </div>
     );
   }
@@ -136,7 +130,7 @@ const App: React.FC = () => {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
           <i className="fa-solid fa-rocket text-3xl text-indigo-600"></i>
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900">Check-in</h1>
+        <h1 className="text-3xl font-extrabold text-slate-900">Sooft Check-in</h1>
         <p className="mt-2 text-slate-500">Reporte para <span className="font-medium text-slate-700">{userEmail}</span> • {currentMonthName}</p>
       </header>
 
@@ -263,14 +257,6 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-
-      <footer className="mt-12 text-center">
-        <button onClick={() => setShowAdmin(true)} className="text-slate-300 hover:text-indigo-400 text-xs transition-colors flex items-center gap-1 mx-auto">
-          <i className="fa-solid fa-lock"></i> Acceso Administrador
-        </button>
-      </footer>
-
-      {showAdmin && <AdminDashboard reviews={allReviews} onClose={() => setShowAdmin(false)} />}
     </div>
   );
 };
