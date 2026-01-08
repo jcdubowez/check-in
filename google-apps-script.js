@@ -175,46 +175,149 @@ function checkIfExists(email, monthId) {
     const dataRange = sheet.getRange(2, 1, lastRow - 1, 8);
     const values = dataRange.getValues();
     
+    // Obtener el header para verificar el orden de las columnas
+    const headerRow = sheet.getRange(1, 1, 1, 8).getValues()[0];
+    Logger.log('Headers encontrados: ' + JSON.stringify(headerRow));
+    
     // Buscar si existe una fila con el email y monthId
-    // Columnas: Email (0), Completitud (1), Bugs (2), Satisfacción (3), Comentarios (4), Timestamp (5), Month ID (6), Month Name (7)
+    // Columnas esperadas: Email (0), Completitud (1), Bugs (2), Satisfacción (3), Comentarios (4), Timestamp (5), Month ID (6), Month Name (7)
     const searchEmail = String(email).trim().toLowerCase();
     const searchMonthId = String(monthId).trim();
     
     Logger.log('Buscando: email=' + searchEmail + ', monthId=' + searchMonthId);
     Logger.log('Total filas a revisar: ' + values.length);
     
+    // Mostrar TODAS las columnas de las primeras 3 filas para debug
+    for (let i = 0; i < Math.min(3, values.length); i++) {
+      const row = values[i];
+      Logger.log('Fila ' + (i + 2) + ' completa:');
+      for (let col = 0; col < row.length; col++) {
+        Logger.log('  Col[' + col + '] (' + (headerRow[col] || 'sin header') + '): "' + row[col] + '" (tipo: ' + typeof row[col] + ')');
+      }
+    }
+    
     let exists = false;
     const foundRows = [];
+    
+    // Función auxiliar para normalizar monthId (maneja fechas y strings)
+    function normalizeMonthId(value) {
+      if (!value) return '';
+      
+      // Si es una fecha (objeto Date)
+      if (value instanceof Date) {
+        const year = value.getFullYear();
+        const month = String(value.getMonth() + 1).padStart(2, '0');
+        return year + '-' + month;
+      }
+      
+      // Si es string, intentar parsear como fecha primero
+      const str = String(value).trim();
+      
+      // Si parece una fecha completa (ej: "Thu Jan 01 2026...")
+      if (str.includes('GMT') || str.includes('Jan') || str.includes('Feb') || str.includes('Mar') || 
+          str.includes('Apr') || str.includes('May') || str.includes('Jun') ||
+          str.includes('Jul') || str.includes('Aug') || str.includes('Sep') ||
+          str.includes('Oct') || str.includes('Nov') || str.includes('Dec')) {
+        try {
+          const date = new Date(str);
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return year + '-' + month;
+          }
+        } catch (e) {
+          // Si falla el parseo, continuar con el string original
+        }
+      }
+      
+      // Si ya está en formato YYYY-MM, devolverlo tal cual
+      if (/^\d{4}-\d{2}$/.test(str)) {
+        return str;
+      }
+      
+      // Si es un número (timestamp), convertirlo
+      const num = Number(str);
+      if (!isNaN(num) && num > 0) {
+        const date = new Date(num);
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          return year + '-' + month;
+        }
+      }
+      
+      return str;
+    }
+    
+    // Buscar todas las filas que coincidan con el email para debug
+    const matchingEmails = [];
+    
+    // Buscar dinámicamente qué columna tiene "Month ID" en el header
+    let monthIdColumnIndex = 6; // Por defecto columna 6 (índice 6)
+    let emailColumnIndex = 0; // Por defecto columna 0 (índice 0)
+    
+    for (let i = 0; i < headerRow.length; i++) {
+      const header = String(headerRow[i] || '').toLowerCase();
+      if (header.includes('month id') || header.includes('monthid') || header === 'month id') {
+        monthIdColumnIndex = i;
+        Logger.log('Month ID encontrado en columna ' + i);
+      }
+      if (header.includes('email') || header === 'email') {
+        emailColumnIndex = i;
+        Logger.log('Email encontrado en columna ' + i);
+      }
+    }
+    
+    Logger.log('Usando columnas: Email=' + emailColumnIndex + ', Month ID=' + monthIdColumnIndex);
     
     for (let i = 0; i < values.length; i++) {
       const row = values[i];
       // Convertir a string y limpiar - manejar diferentes tipos de datos
-      const rowEmail = String(row[0] || '').trim().toLowerCase();
-      const rowMonthId = String(row[6] || '').trim();
+      const rowEmail = String(row[emailColumnIndex] || '').trim().toLowerCase();
+      const rowMonthIdRaw = row[monthIdColumnIndex]; // Usar la columna encontrada dinámicamente
+      const rowMonthId = normalizeMonthId(rowMonthIdRaw);
       
       // Log de las primeras 3 filas para debug
       if (i < 3) {
-        Logger.log('Fila ' + (i + 2) + ': email="' + rowEmail + '", monthId="' + rowMonthId + '"');
+        Logger.log('Fila ' + (i + 2) + ': email="' + rowEmail + '", monthId original="' + rowMonthIdRaw + '", monthId normalizado="' + rowMonthId + '"');
         Logger.log('  Tipo email: ' + typeof row[0] + ', Tipo monthId: ' + typeof row[6]);
-        Logger.log('  Email original: "' + row[0] + '", MonthId original: "' + row[6] + '"');
       }
       
       // Comparación más flexible
       const emailMatch = rowEmail === searchEmail;
       const monthIdMatch = rowMonthId === searchMonthId;
       
+      // Guardar todas las filas que coinciden con el email para debug
+      if (emailMatch) {
+        matchingEmails.push({
+          row: i + 2,
+          email: rowEmail,
+          monthId: rowMonthId,
+          monthIdOriginal: String(rowMonthIdRaw),
+          monthIdType: typeof rowMonthIdRaw
+        });
+      }
+      
       if (emailMatch && monthIdMatch) {
         exists = true;
-        foundRows.push({ row: i + 2, email: rowEmail, monthId: rowMonthId });
+        foundRows.push({ row: i + 2, email: rowEmail, monthId: rowMonthId, monthIdOriginal: String(rowMonthIdRaw) });
         Logger.log('✅ MATCH encontrado en fila ' + (i + 2));
         break;
       } else if (emailMatch) {
         // Email coincide pero monthId no - útil para debug
-        Logger.log('⚠️ Email coincide pero monthId no: buscado="' + searchMonthId + '", encontrado="' + rowMonthId + '" en fila ' + (i + 2));
+        Logger.log('⚠️ Email coincide pero monthId no: buscado="' + searchMonthId + '", encontrado="' + rowMonthId + '" (original: "' + rowMonthIdRaw + '", tipo: ' + typeof rowMonthIdRaw + ') en fila ' + (i + 2));
       } else if (monthIdMatch) {
         // MonthId coincide pero email no - útil para debug
         Logger.log('⚠️ MonthId coincide pero email no: buscado="' + searchEmail + '", encontrado="' + rowEmail + '" en fila ' + (i + 2));
       }
+    }
+    
+    // Si no se encontró match pero hay emails que coinciden, loggear todas
+    if (!exists && matchingEmails.length > 0) {
+      Logger.log('⚠️ Se encontraron ' + matchingEmails.length + ' filas con el email "' + searchEmail + '" pero ninguna con monthId "' + searchMonthId + '":');
+      matchingEmails.forEach(m => {
+        Logger.log('  Fila ' + m.row + ': monthId="' + m.monthId + '" (original: "' + m.monthIdOriginal + '", tipo: ' + m.monthIdType + ')');
+      });
     }
     
     Logger.log('checkIfExists result: exists=' + exists + ', searched=' + searchEmail + '/' + searchMonthId + ', totalRows=' + values.length);
@@ -226,13 +329,25 @@ function checkIfExists(email, monthId) {
       searched: { email: searchEmail, monthId: searchMonthId },
       totalRows: values.length,
       foundRows: foundRows,
+      matchingEmails: matchingEmails, // Todas las filas con el email buscado
       debug: {
         searchEmail: searchEmail,
         searchMonthId: searchMonthId,
+        headers: headerRow,
+        emailColumnIndex: emailColumnIndex,
+        monthIdColumnIndex: monthIdColumnIndex,
         firstFewRows: values.slice(0, 3).map((row, idx) => ({
           row: idx + 2,
-          email: String(row[0] || '').trim(),
-          monthId: String(row[6] || '').trim()
+          email: String(row[emailColumnIndex] || '').trim(),
+          monthId: normalizeMonthId(row[monthIdColumnIndex]),
+          monthIdOriginal: String(row[monthIdColumnIndex] || ''),
+          monthIdType: typeof row[monthIdColumnIndex],
+          allColumns: row.map((val, colIdx) => ({
+            col: colIdx,
+            header: headerRow[colIdx] || '',
+            value: String(val || ''),
+            type: typeof val
+          }))
         }))
       }
     });
@@ -286,19 +401,23 @@ function appendToSheet(data) {
     }
     
     // Agregar la nueva fila con los datos
-    sheet.appendRow([
+    const lastRow = sheet.getLastRow() + 1;
+    sheet.getRange(lastRow, 1, 1, 8).setValues([[
       data.email || '',
       data.completion || 0,
       data.bugs || 0,
       data.satisfaction || 0,
       data.comments || '',
       data.timestamp || new Date().toLocaleString(),
-      data.monthId || '',
+      data.monthId || '', // Guardar como texto
       data.monthName || ''
-    ]);
+    ]]);
+    
+    // Asegurar que la columna Month ID (columna 7, índice 6) sea texto
+    // Usar formato de texto para evitar que Google Sheets convierta "2026-01" a fecha
+    sheet.getRange(lastRow, 7, 1, 1).setNumberFormat('@');
     
     // Aplicar formato a la nueva fila (opcional)
-    const lastRow = sheet.getLastRow();
     const newRowRange = sheet.getRange(lastRow, 1, 1, 8);
     newRowRange.setBorder(true, true, true, true, true, true);
     

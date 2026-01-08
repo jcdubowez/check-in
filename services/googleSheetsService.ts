@@ -58,20 +58,46 @@ export const checkIfResponseExists = async (email: string, monthId: string): Pro
           console.log('📥 Respuesta de Google Sheets (POST directo):', directResult);
           
           if (directResult.success === true && typeof directResult.exists === 'boolean') {
-            // Mostrar información de debug si está disponible
+            // Mostrar información de debug completa
             if (directResult.debug) {
               console.log('🔍 Debug info de Google Sheets:', {
                 buscando: directResult.searched,
                 totalFilas: directResult.totalRows,
+                headers: directResult.debug.headers,
+                emailColumnIndex: directResult.debug.emailColumnIndex,
+                monthIdColumnIndex: directResult.debug.monthIdColumnIndex,
                 primerasFilas: directResult.debug.firstFewRows
+              });
+              
+              // Mostrar todas las columnas de las primeras filas
+              if (directResult.debug.firstFewRows) {
+                directResult.debug.firstFewRows.forEach((row: any) => {
+                  console.log('📋 Fila ' + row.row + ':', {
+                    email: row.email,
+                    monthId: row.monthId,
+                    monthIdOriginal: row.monthIdOriginal,
+                    monthIdType: row.monthIdType,
+                    todasLasColumnas: row.allColumns
+                  });
+                });
+              }
+            }
+            
+            // Mostrar todas las filas que coinciden con el email
+            if (directResult.matchingEmails && directResult.matchingEmails.length > 0) {
+              console.log('📧 Filas encontradas con el email "' + directResult.searched.email + '":', directResult.matchingEmails);
+              directResult.matchingEmails.forEach((match: any) => {
+                console.log('  - Fila ' + match.row + ': monthId="' + match.monthId + '" (original: "' + match.monthIdOriginal + '", tipo: ' + match.monthIdType + ')');
               });
             }
             
             if (!directResult.exists && directResult.totalRows > 0) {
               console.warn('⚠️ No se encontró coincidencia aunque hay', directResult.totalRows, 'filas en el sheet');
               console.warn('   Buscando:', directResult.searched);
-              if (directResult.debug && directResult.debug.firstFewRows) {
-                console.warn('   Primeras filas en el sheet:', directResult.debug.firstFewRows);
+              if (directResult.matchingEmails && directResult.matchingEmails.length > 0) {
+                console.warn('   Se encontraron', directResult.matchingEmails.length, 'filas con el email correcto pero monthId diferente');
+              } else {
+                console.warn('   No se encontró ninguna fila con el email "' + directResult.searched.email + '"');
               }
             }
             
