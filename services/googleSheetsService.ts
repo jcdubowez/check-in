@@ -10,6 +10,7 @@ export interface GoogleSheetsReview {
 }
 
 // La variable de entorno se inyecta en tiempo de build por Vite
+// @ts-ignore - Vite inyecta estas variables en tiempo de build
 const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || '';
 
 /**

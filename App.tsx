@@ -117,7 +117,22 @@ const App: React.FC = () => {
     setInsight(feedback);
     
     setIsSubmitting(false);
-    setAlreadyDoneThisMonth(true);
+    
+    // Verificar inmediatamente después de guardar para asegurar que se actualice el estado
+    try {
+      const hasDoneInSheets = await checkIfResponseExists(userEmail, currentMonthId);
+      const hasDoneLocal = updatedReviews.some(r => 
+        r.developerEmail?.toLowerCase() === userEmail.toLowerCase() && 
+        r.monthId === currentMonthId
+      );
+      setAlreadyDoneThisMonth(hasDoneInSheets || hasDoneLocal);
+      console.log('✅ Estado actualizado después de guardar:', { hasDoneInSheets, hasDoneLocal });
+    } catch (error) {
+      // Si falla la verificación, usar el estado local
+      setAlreadyDoneThisMonth(true);
+      console.warn('⚠️ Error verificando después de guardar, usando estado local');
+    }
+    
     setStep(5); // Success step
   };
 
