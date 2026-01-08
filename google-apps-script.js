@@ -32,8 +32,12 @@ function doPost(e) {
       return appendToSheet(data.data);
     }
     
+    if (data.action === 'check' && data.email && data.monthId) {
+      return checkIfExists(data.email, data.monthId);
+    }
+    
     return ContentService
-      .createTextOutput(JSON.stringify({ success: false, error: 'Invalid action' }))
+      .createTextOutput(JSON.stringify({ success: false, error: 'Invalid action or missing parameters' }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     return ContentService

@@ -23,31 +23,64 @@ export const checkIfResponseExists = async (email: string, monthId: string): Pro
       return false;
     }
 
-    const url = new URL(GOOGLE_SCRIPT_URL);
-    url.searchParams.set('action', 'check');
-    url.searchParams.set('email', email);
-    url.searchParams.set('monthId', monthId);
+    console.log('🔍 Verificando en Google Sheets:', { email, monthId });
 
-    console.log('🔍 Verificando en Google Sheets:', { email, monthId, url: url.toString().substring(0, 80) + '...' });
+    // Usar POST porque GET no está recibiendo los parámetros correctamente en Google Apps Script
+    // Intentar POST sin no-cors para poder leer la respuesta
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'check',
+          email: email,
+          monthId: monthId,
+        }),
+      });
 
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-    });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
-    if (!response.ok) {
-      console.warn('⚠️ Respuesta no OK de Google Sheets:', response.status, response.statusText);
+      const result = await response.json();
+      console.log('📥 Respuesta de Google Sheets (POST):', result);
+      
+      if (result.success === false) {
+        console.warn('⚠️ Google Sheets reportó error:', result.error);
+        return false;
+      }
+      
+      // Si tiene exists, usarlo
+      if (typeof result.exists === 'boolean') {
+        return result.exists;
+      }
+      
       return false;
-    }
+    } catch (postError) {
+      // Si POST falla por CORS, intentar GET como fallback
+      console.log('⚠️ POST falló, intentando GET como fallback...');
+      const getUrl = new URL(GOOGLE_SCRIPT_URL);
+      getUrl.searchParams.set('action', 'check');
+      getUrl.searchParams.set('email', email);
+      getUrl.searchParams.set('monthId', monthId);
+      
+      const getResponse = await fetch(getUrl.toString(), {
+        method: 'GET',
+      });
 
-    const result = await response.json();
-    console.log('📥 Respuesta de Google Sheets:', result);
-    
-    if (result.success === false) {
-      console.warn('⚠️ Google Sheets reportó error:', result.error);
-      return false;
+      if (getResponse.ok) {
+        const getResult = await getResponse.json();
+        console.log('📥 Respuesta de Google Sheets (GET fallback):', getResult);
+        
+        if (typeof getResult.exists === 'boolean') {
+          return getResult.exists;
+        }
+      }
+      
+      throw postError;
     }
-    
-    return result.exists === true;
   } catch (error) {
     console.warn('⚠️ Error verificando en Google Sheets, usando localStorage:', error);
     return false;
