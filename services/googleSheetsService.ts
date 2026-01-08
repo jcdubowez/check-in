@@ -18,7 +18,7 @@ const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || '';
  */
 /**
  * Verifica si ya existe una respuesta para un email y monthId en Google Sheets
- * Usa un proxy CORS para evitar problemas de CORS
+ * Usa POST porque GET no está recibiendo los parámetros correctamente en Google Apps Script
  */
 export const checkIfResponseExists = async (email: string, monthId: string): Promise<boolean> => {
   try {
@@ -27,57 +27,41 @@ export const checkIfResponseExists = async (email: string, monthId: string): Pro
       return false;
     }
 
-    console.log('🔍 Verificando en Google Sheets:', { email, monthId });
+    console.log('🔍 Verificando en Google Sheets (POST):', { email, monthId });
 
-    // Construir URL con parámetros
-    const getUrl = new URL(GOOGLE_SCRIPT_URL);
-    getUrl.searchParams.set('action', 'check');
-    getUrl.searchParams.set('email', email);
-    getUrl.searchParams.set('monthId', monthId);
+    const postData = {
+      action: 'check',
+      email: email,
+      monthId: monthId,
+    };
     
-    // Usar un proxy CORS para evitar problemas de CORS
-    // Alternativamente, intentar directamente (a veces funciona)
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(getUrl.toString())}`;
-    
+    // Intentar POST directo usando text/plain para evitar preflight CORS
     try {
-      // Intentar primero sin proxy
-      const directResponse = await fetch(getUrl.toString(), {
-        method: 'GET',
-        mode: 'cors',
+      const directResponse = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(postData),
       });
 
       if (directResponse.ok) {
         const directResult = await directResponse.json();
-        console.log('📥 Respuesta de Google Sheets (GET directo):', directResult);
+        console.log('📥 Respuesta de Google Sheets (POST directo):', directResult);
         
         if (typeof directResult.exists === 'boolean') {
           return directResult.exists;
         }
+      } else {
+        console.warn('⚠️ POST no OK:', directResponse.status, directResponse.statusText);
       }
-    } catch (directError) {
-      console.log('⚠️ GET directo falló, intentando con proxy CORS...');
-      
-      // Si falla, usar proxy CORS
-      try {
-        const proxyResponse = await fetch(proxyUrl, {
-          method: 'GET',
-        });
-
-        if (proxyResponse.ok) {
-          const proxyResult = await proxyResponse.json();
-          const content = JSON.parse(proxyResult.contents);
-          console.log('📥 Respuesta de Google Sheets (vía proxy):', content);
-          
-          if (typeof content.exists === 'boolean') {
-            return content.exists;
-          }
-        }
-      } catch (proxyError) {
-        console.warn('⚠️ Proxy CORS también falló:', proxyError);
-      }
+    } catch (directError: any) {
+      // Si falla por CORS, no podemos leer la respuesta
+      console.warn('⚠️ POST directo falló (probablemente CORS):', directError.message);
+      // Retornar false para usar localStorage como fallback
+      return false;
     }
     
-    // Si todo falla, retornar false para usar localStorage
     return false;
   } catch (error) {
     console.warn('⚠️ Error verificando en Google Sheets, usando localStorage:', error);
@@ -100,9 +84,8 @@ export const saveToGoogleSheets = async (review: GoogleSheetsReview): Promise<bo
 
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors', // Google Apps Script no devuelve CORS headers
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain;charset=utf-8',
       },
       body: JSON.stringify({
         action: 'append',
@@ -119,9 +102,21 @@ export const saveToGoogleSheets = async (review: GoogleSheetsReview): Promise<bo
       }),
     });
 
-    // Con no-cors no podemos verificar la respuesta, pero asumimos éxito
-    console.log('✅ Datos enviados a Google Sheets (modo no-cors)');
-    return true;
+    // Con text/plain podemos leer la respuesta
+    if (response.ok) {
+      try {
+        const result = await response.json();
+        console.log('✅ Datos guardados en Google Sheets:', result);
+        return result.success === true;
+      } catch (e) {
+        // Si no se puede parsear, asumir éxito
+        console.log('✅ Datos enviados a Google Sheets (respuesta no JSON)');
+        return true;
+      }
+    }
+    
+    console.warn('⚠️ Respuesta no OK al guardar:', response.status);
+    return false;
   } catch (error) {
     console.error('❌ Error saving to Google Sheets:', error);
     return false;
