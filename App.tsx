@@ -34,13 +34,13 @@ const App: React.FC = () => {
       console.log('🔍 Verificando estado para:', { email: userEmail, monthId: currentMonthId });
       
       // Cargar desde localStorage (caché local para UI rápida)
-      const saved = localStorage.getItem('devpulse_reviews');
+    const saved = localStorage.getItem('devpulse_reviews');
       let hasDoneLocal = false;
       
-      if (saved) {
+    if (saved) {
         try {
-          const reviews: MonthlyReview[] = JSON.parse(saved);
-          setAllReviews(reviews);
+      const reviews: MonthlyReview[] = JSON.parse(saved);
+      setAllReviews(reviews);
           hasDoneLocal = reviews.some(r => 
             r.developerEmail?.toLowerCase() === userEmail.toLowerCase() && 
             r.monthId === currentMonthId
@@ -148,7 +148,7 @@ const App: React.FC = () => {
       console.log('✅ Estado actualizado después de guardar:', { hasDoneInSheets, hasDoneLocal });
     } catch (error) {
       // Si falla la verificación, usar el estado local
-      setAlreadyDoneThisMonth(true);
+    setAlreadyDoneThisMonth(true);
       console.warn('⚠️ Error verificando después de guardar, usando estado local');
     }
     
@@ -169,20 +169,30 @@ const App: React.FC = () => {
           <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <i className="fa-solid fa-rocket text-3xl text-indigo-600"></i>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Bienvenido a Sooft Check-in</h1>
-          <p className="text-slate-500 mb-8 text-sm">Ingresa tu email corporativo para comenzar tu revisión.</p>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Pulso del Sprint</h1>
+          <p className="text-slate-500 mb-8 text-sm">Check-in rápido · 1–2 minutos</p>
+          <form onSubmit={handleLogin} className="space-y-4 text-left">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                Email corporativo
+              </label>
             <input
+                id="email"
               type="email"
               required
-              placeholder="tu@empresa.com"
+                placeholder="tu.nombre@sooft.tech"
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
               className="w-full px-4 py-3 border-2 border-slate-100 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
             />
+              <p className="mt-2 text-xs text-slate-500">Solo lo usamos para identificar tu check-in.</p>
+            </div>
+            <div className="pt-2">
             <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-200">
-              Ingresar
+                Comenzar
             </button>
+              <p className="mt-3 text-xs text-slate-500 text-center">No es una evaluación.</p>
+            </div>
           </form>
         </div>
       </div>
