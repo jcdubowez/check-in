@@ -170,7 +170,7 @@ const App: React.FC = () => {
             <i className="fa-solid fa-rocket text-3xl text-indigo-600"></i>
           </div>
           <h1 className="text-2xl font-bold text-slate-800 mb-2">Check-in mensual</h1>
-          <p className="text-slate-500 mb-8 text-sm">Pulso simple del sprint para quienes ya están en Sooft.</p>
+          <p className="text-slate-500 mb-8 text-sm">Pulso simple del sprint y carga de horas.</p>
           <form onSubmit={handleLogin} className="space-y-4 text-left">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
@@ -190,7 +190,6 @@ const App: React.FC = () => {
               <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-200">
                 Comenzar
               </button>
-              <p className="mt-3 text-xs text-slate-500 text-center">No es una evaluación.</p>
             </div>
           </form>
         </div>
