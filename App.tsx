@@ -169,28 +169,27 @@ const App: React.FC = () => {
           <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <i className="fa-solid fa-rocket text-3xl text-indigo-600"></i>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Pulso del Sprint</h1>
-          <p className="text-slate-500 mb-8 text-sm">Check-in rápido · 1–2 minutos</p>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Check-in mensual</h1>
+          <p className="text-slate-500 mb-8 text-sm">Pulso simple del sprint para quienes ya están en Sooft.</p>
           <form onSubmit={handleLogin} className="space-y-4 text-left">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
                 Email corporativo
               </label>
-            <input
+              <input
                 id="email"
-              type="email"
-              required
+                type="email"
+                required
                 placeholder="tu.nombre@sooft.tech"
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-slate-100 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
-            />
-              <p className="mt-2 text-xs text-slate-500">Solo lo usamos para identificar tu check-in.</p>
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-slate-100 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
+              />
             </div>
             <div className="pt-2">
-            <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-200">
+              <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-200">
                 Comenzar
-            </button>
+              </button>
               <p className="mt-3 text-xs text-slate-500 text-center">No es una evaluación.</p>
             </div>
           </form>
