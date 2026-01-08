@@ -50,20 +50,36 @@ function doPost(e) {
  */
 function doGet(e) {
   try {
-    const action = e.parameter.action;
-    const email = e.parameter.email;
-    const monthId = e.parameter.monthId;
+    // Los parámetros vienen en e.parameter cuando se usa URL con query string
+    const action = e.parameter && e.parameter.action ? e.parameter.action : null;
+    const email = e.parameter && e.parameter.email ? e.parameter.email : null;
+    const monthId = e.parameter && e.parameter.monthId ? e.parameter.monthId : null;
+    
+    // Log para debugging (solo visible en el editor de Apps Script)
+    Logger.log('doGet called with parameters: ' + JSON.stringify(e.parameter));
     
     if (action === 'check' && email && monthId) {
+      Logger.log('Calling checkIfExists with: ' + email + ', ' + monthId);
       return checkIfExists(email, monthId);
     }
     
+    // Si no tiene los parámetros correctos, devolver mensaje de estado
     return ContentService
-      .createTextOutput(JSON.stringify({ success: true, message: 'Google Apps Script is running' }))
+      .createTextOutput(JSON.stringify({ 
+        success: true, 
+        message: 'Google Apps Script is running',
+        receivedParams: e.parameter || {},
+        note: 'Use ?action=check&email=xxx&monthId=YYYY-MM to check if response exists'
+      }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
+    Logger.log('Error in doGet: ' + error.toString());
     return ContentService
-      .createTextOutput(JSON.stringify({ success: false, error: error.toString() }))
+      .createTextOutput(JSON.stringify({ 
+        success: false, 
+        error: error.toString(),
+        stack: error.stack
+      }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -80,27 +96,40 @@ function checkIfExists(email, monthId) {
       return ContentService
         .createTextOutput(JSON.stringify({ 
           success: true, 
-          exists: false 
+          exists: false,
+          reason: 'Sheet is empty or has no data'
         }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
     // Obtener todos los datos (empezando desde la fila 2, ya que la 1 es el header)
-    const dataRange = sheet.getRange(2, 1, sheet.getLastRow() - 1, 8);
+    const lastRow = sheet.getLastRow();
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, 8);
     const values = dataRange.getValues();
     
     // Buscar si existe una fila con el email y monthId
     // Columnas: Email (0), Completitud (1), Bugs (2), Satisfacción (3), Comentarios (4), Timestamp (5), Month ID (6), Month Name (7)
-    const exists = values.some(row => {
-      const rowEmail = String(row[0]).trim().toLowerCase();
-      const rowMonthId = String(row[6]).trim();
-      return rowEmail === email.toLowerCase() && rowMonthId === monthId;
-    });
+    const searchEmail = String(email).trim().toLowerCase();
+    const searchMonthId = String(monthId).trim();
+    
+    let exists = false;
+    for (let i = 0; i < values.length; i++) {
+      const row = values[i];
+      const rowEmail = String(row[0] || '').trim().toLowerCase();
+      const rowMonthId = String(row[6] || '').trim();
+      
+      if (rowEmail === searchEmail && rowMonthId === searchMonthId) {
+        exists = true;
+        break;
+      }
+    }
     
     return ContentService
       .createTextOutput(JSON.stringify({ 
         success: true, 
-        exists: exists 
+        exists: exists,
+        searched: { email: searchEmail, monthId: searchMonthId },
+        totalRows: values.length
       }))
       .setMimeType(ContentService.MimeType.JSON);
       
@@ -108,7 +137,8 @@ function checkIfExists(email, monthId) {
     return ContentService
       .createTextOutput(JSON.stringify({ 
         success: false, 
-        error: error.toString() 
+        error: error.toString(),
+        stack: error.stack
       }))
       .setMimeType(ContentService.MimeType.JSON);
   }
